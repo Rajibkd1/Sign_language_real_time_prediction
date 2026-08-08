@@ -5,7 +5,7 @@ import time
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 import cv2
 import mediapipe as mp
@@ -79,6 +79,15 @@ class LandmarkExtractionResult:
     detections: Dict[str, float]
 
 
+@dataclass
+class LiveFrameExtractionResult:
+    features: np.ndarray
+    times_s: np.ndarray
+    flags: List[DetectionFlags]
+    mediapipe_ms_by_frame: List[float]
+    mediapipe_ms: float
+
+
 def detection_summary(flags: List[DetectionFlags]) -> Dict[str, float]:
     if not flags:
         return {"pose_rate": 0.0, "face_rate": 0.0, "left_hand_rate": 0.0, "right_hand_rate": 0.0}
@@ -130,6 +139,7 @@ class MediaPipe1662Extractor:
             )
         )
         self._last_timestamp_ms = -1
+        self._timestamp_offset_ms = 0
 
     def close(self) -> None:
         for detector in (self.pose_detector, self.hand_detector, self.face_detector):
@@ -139,9 +149,11 @@ class MediaPipe1662Extractor:
                 pass
 
     def _sanitize_timestamp_ms(self, timestamp_ms: int) -> int:
-        ts = int(timestamp_ms)
+        raw_ts = int(timestamp_ms)
+        ts = raw_ts + self._timestamp_offset_ms
         if ts <= self._last_timestamp_ms:
-            ts = self._last_timestamp_ms + 1
+            self._timestamp_offset_ms = self._last_timestamp_ms + 1 - raw_ts
+            ts = raw_ts + self._timestamp_offset_ms
         self._last_timestamp_ms = ts
         return ts
 
@@ -243,12 +255,91 @@ class MediaPipeService:
         with self._lock:
             return self._extract_from_video_locked(path)
 
+    def extract_from_frames(self, frames: Sequence[Tuple[np.ndarray, float]]) -> LandmarkExtractionResult:
+        with self._lock:
+            return self._extract_from_frames_locked(frames)
+
+    def extract_live_frame_batch(self, frames: Sequence[Tuple[np.ndarray, float]]) -> LiveFrameExtractionResult:
+        with self._lock:
+            return self._extract_live_frame_batch_locked(frames)
+
+    def _extract_live_frame_batch_locked(self, frames: Sequence[Tuple[np.ndarray, float]]) -> LiveFrameExtractionResult:
+        ordered = sorted(frames, key=lambda item: item[1])
+        features: List[np.ndarray] = []
+        times: List[float] = []
+        flags: List[DetectionFlags] = []
+        mediapipe_ms_by_frame: List[float] = []
+        mediapipe_ms = 0.0
+
+        for frame, timestamp_s in ordered:
+            if frame is None or frame.size <= 0:
+                continue
+            feature, mp_ms, detection = self.extractor.extract(frame, float(timestamp_s))
+            features.append(feature)
+            times.append(float(timestamp_s))
+            flags.append(detection)
+            mediapipe_ms_by_frame.append(float(mp_ms))
+            mediapipe_ms += mp_ms
+
+        if not features:
+            raise MediaPipeFailureError("No live frames were usable for MediaPipe.")
+
+        return LiveFrameExtractionResult(
+            features=np.ascontiguousarray(np.stack(features, axis=0), dtype=np.float32),
+            times_s=np.asarray(times, dtype=np.float64),
+            flags=flags,
+            mediapipe_ms_by_frame=mediapipe_ms_by_frame,
+            mediapipe_ms=float(mediapipe_ms),
+        )
+
+    def _extract_from_frames_locked(self, frames: Sequence[Tuple[np.ndarray, float]]) -> LandmarkExtractionResult:
+        if len(frames) < 2:
+            raise RecordingTooShortError("At least two live frames are required.")
+
+        ordered = sorted(frames, key=lambda item: item[1])
+        features: List[np.ndarray] = []
+        times: List[float] = []
+        flags: List[DetectionFlags] = []
+        mediapipe_ms = 0.0
+
+        for frame, timestamp_s in ordered:
+            if frame is None or frame.size <= 0:
+                continue
+            feature, mp_ms, detection = self.extractor.extract(frame, float(timestamp_s))
+            features.append(feature)
+            times.append(float(timestamp_s))
+            flags.append(detection)
+            mediapipe_ms += mp_ms
+
+        if not features:
+            raise MediaPipeFailureError("No live frames were usable for MediaPipe.")
+
+        duration_seconds = max(float(times[-1] - times[0]) if len(times) > 1 else 0.0, len(features) / float(self.settings.target_fps))
+        if duration_seconds < self.settings.min_video_seconds:
+            raise RecordingTooShortError(detail=f"Duration {duration_seconds:.2f}s is below the minimum.")
+
+        rates = detection_summary(flags)
+        if rates["pose_rate"] < 0.05 and (rates["left_hand_rate"] + rates["right_hand_rate"]) < 0.05:
+            raise MediaPipeFailureError("Pose and hand landmarks were nearly absent.")
+
+        return LandmarkExtractionResult(
+            features=np.ascontiguousarray(np.stack(features, axis=0), dtype=np.float32),
+            times_s=np.asarray(times, dtype=np.float64),
+            raw_video_frames=len(ordered),
+            sampled_frames=len(features),
+            duration_seconds=duration_seconds,
+            video_decode_ms=0.0,
+            mediapipe_ms=float(mediapipe_ms),
+            detections=rates,
+        )
+
     def _extract_from_video_locked(self, path: Path) -> LandmarkExtractionResult:
         cap = cv2.VideoCapture(str(path))
         if not cap.isOpened():
             raise UnsupportedVideoError("OpenCV could not open the uploaded video.")
 
-        fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+        raw_fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+        fps = self._trusted_video_fps(raw_fps)
         frame_count_meta = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
         metadata_duration = frame_count_meta / fps if fps > 0 and frame_count_meta > 0 else 0.0
         if metadata_duration > self.settings.max_video_seconds + 0.75:
@@ -262,7 +353,8 @@ class MediaPipeService:
         mediapipe_ms = 0.0
         frame_index = 0
         next_sample_s = 0.0
-        sample_period = 1.0 / float(self.settings.target_fps)
+        sample_fps = min(float(self.settings.target_fps), max(1.0, float(self.settings.video_sample_fps)))
+        sample_period = 1.0 / sample_fps
         last_timestamp_s = 0.0
 
         try:
@@ -274,10 +366,10 @@ class MediaPipeService:
                     break
 
                 pos_ms = float(cap.get(cv2.CAP_PROP_POS_MSEC) or 0.0)
-                if pos_ms > 0:
-                    timestamp_s = pos_ms / 1000.0
-                elif fps > 0:
+                if fps > 0:
                     timestamp_s = frame_index / fps
+                elif pos_ms > 0:
+                    timestamp_s = pos_ms / 1000.0
                 else:
                     timestamp_s = frame_index * sample_period
 
@@ -306,7 +398,13 @@ class MediaPipeService:
         if not features:
             raise MediaPipeFailureError("No frames were sampled for MediaPipe.")
 
-        duration_seconds = max(float(last_timestamp_s), float(metadata_duration), float(times[-1] - times[0] if len(times) > 1 else 0.0))
+        sampled_duration = float((len(features) - 1) / sample_fps) if len(features) > 1 and sample_fps > 0 else 0.0
+        duration_seconds = max(
+            float(last_timestamp_s),
+            float(metadata_duration),
+            float(times[-1] - times[0] if len(times) > 1 else 0.0),
+            sampled_duration,
+        )
         if duration_seconds < self.settings.min_video_seconds:
             raise RecordingTooShortError(detail=f"Duration {duration_seconds:.2f}s is below the minimum.")
 
@@ -325,3 +423,9 @@ class MediaPipeService:
             detections=rates,
         )
 
+    @staticmethod
+    def _trusted_video_fps(fps: float) -> float:
+        fps = float(fps or 0.0)
+        if 5.0 <= fps <= 120.0:
+            return fps
+        return 0.0

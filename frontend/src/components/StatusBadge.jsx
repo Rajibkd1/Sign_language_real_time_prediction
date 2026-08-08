@@ -5,16 +5,17 @@ const icons = {
   recording: CircleDot,
   success: CheckCircle2,
   warning: AlertTriangle,
-  loading: Loader2
+  loading: Loader2,
 };
 
 export default function StatusBadge({ tone = 'ready', children }) {
   const Icon = icons[tone] || CircleDot;
   return (
     <span className={`status-badge ${tone}`} role="status">
-      <Icon size={15} aria-hidden="true" />
+      <span className="status-badge-icon">
+        <Icon size={14} aria-hidden="true" />
+      </span>
       {children}
     </span>
   );
 }
-

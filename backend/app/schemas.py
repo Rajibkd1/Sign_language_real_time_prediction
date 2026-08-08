@@ -43,6 +43,10 @@ class DetectionRates(BaseModel):
     right_hand_rate: float
 
 
+def _zero_detection_rates() -> DetectionRates:
+    return DetectionRates(pose_rate=0.0, face_rate=0.0, left_hand_rate=0.0, right_hand_rate=0.0)
+
+
 class ConfidenceInfo(BaseModel):
     value: float = Field(ge=0.0, le=1.0)
     type: str = "uncalibrated_greedy_heuristic"
@@ -61,6 +65,38 @@ class InferenceResponse(BaseModel):
     detections: DetectionRates
     confidence: ConfidenceInfo
     warnings: List[str] = []
+
+
+class LiveFrame(BaseModel):
+    image: str
+    timestamp_ms: int = Field(ge=0)
+
+
+class FrameInferenceRequest(BaseModel):
+    frames: List[LiveFrame] = Field(min_length=2, max_length=96)
+    save_history: bool = False
+
+
+class LiveInferenceRequest(BaseModel):
+    session_id: Optional[str] = None
+    frames: List[LiveFrame] = Field(default_factory=list, max_length=24)
+    reset: bool = False
+    predict: bool = True
+    save_history: bool = False
+
+
+class LiveInferenceResponse(BaseModel):
+    success: bool = True
+    session_id: str
+    segment_id: int = 0
+    state: str = "idle"
+    motion_score: float = 0.0
+    capture_fps: float = 0.0
+    detections: DetectionRates = Field(default_factory=_zero_detection_rates)
+    is_final: bool = False
+    buffered_frames: int
+    duration_seconds: float
+    result: Optional[InferenceResponse] = None
 
 
 class ErrorResponse(BaseModel):
@@ -83,4 +119,3 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     items: List[HistoryItem]
-

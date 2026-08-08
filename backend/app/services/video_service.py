@@ -89,4 +89,3 @@ def delete_temp_files(paths: Iterable[Path]) -> None:
             Path(path).unlink(missing_ok=True)
         except Exception:
             pass
-

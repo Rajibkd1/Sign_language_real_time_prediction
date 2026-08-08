@@ -17,10 +17,27 @@ function normalizeCameraError(error) {
   return error.message || "We couldn't access your camera.";
 }
 
+function inferFacingMode(settings = {}, device) {
+  const settingMode = String(settings.facingMode || '').toLowerCase();
+  if (settingMode === 'user' || settingMode === 'environment') {
+    return settingMode;
+  }
+
+  const label = String(device?.label || '').toLowerCase();
+  if (/\b(back|rear|environment|world)\b/.test(label)) {
+    return 'environment';
+  }
+  if (/\b(front|user|selfie)\b/.test(label)) {
+    return 'user';
+  }
+  return '';
+}
+
 export function useCamera() {
   const [stream, setStream] = useState(null);
   const [devices, setDevices] = useState([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState('');
+  const [facingMode, setFacingMode] = useState('');
   const [error, setError] = useState('');
   const streamRef = useRef(null);
 
@@ -28,6 +45,7 @@ export function useCamera() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setStream(null);
+    setFacingMode('');
   }, []);
 
   const refreshDevices = useCallback(async () => {
@@ -64,6 +82,9 @@ export function useCamera() {
         const videoDevices = await refreshDevices();
         const activeTrack = nextStream.getVideoTracks()[0];
         const activeSettings = activeTrack?.getSettings?.() || {};
+        const activeDevice = videoDevices.find((device) => device.deviceId === activeSettings.deviceId)
+          || videoDevices.find((device) => device.deviceId === deviceId);
+        setFacingMode(inferFacingMode(activeSettings, activeDevice));
         if (activeSettings.deviceId) {
           setSelectedDeviceId(activeSettings.deviceId);
         } else if (!selectedDeviceId && videoDevices[0]?.deviceId) {
@@ -96,6 +117,8 @@ export function useCamera() {
     stream,
     devices,
     selectedDeviceId,
+    facingMode,
+    shouldMirrorPreview: facingMode !== 'environment',
     setSelectedDeviceId,
     requestCamera,
     switchCamera,
@@ -103,4 +126,3 @@ export function useCamera() {
     error
   };
 }
-

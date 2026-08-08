@@ -1,23 +1,36 @@
 # BdSL Vision
 
-Bangla Sign Language Sentence Recognition with browser webcam capture, FastAPI, MediaPipe Tasks, PyTorch Model 6, and word-level CTC decoding.
+Bangla Sign Language Sentence Recognition with live browser camera translation, uploaded video inference, FastAPI, MediaPipe Tasks, PyTorch Model 6, and word-level CTC decoding.
 
 BdSL Vision is designed for the correct workflow:
 
 ```text
-Start -> sign one complete sentence -> Stop -> upload finished clip -> extract landmarks -> Model 6 -> CTC decode -> Bangla sentence
+Live camera -> stream latest frame batches -> accumulate landmarks in a backend session -> final Model 6 CTC decode -> Bangla sentence
+Video upload -> decode completed clip -> extract landmarks -> Model 6 -> CTC decode -> Bangla sentence
 ```
 
-This is continuous sentence recognition using word-level CTC decoding. It is not causal streaming recognition.
+The live camera path keeps a rolling in-memory landmark session and drops stale browser-frame backlog, so delayed backend work does not replay old signs. Model 6 is still a full-sequence encoder, so the live page prioritizes fast final decoding after sentence-end detection instead of continuously publishing stale partial drafts.
+
+Live camera recognition uses a pre-Model 6 segmentation layer:
+
+```text
+IDLE -> motion threshold for consecutive frames -> SIGNING
+SIGNING -> low motion for about 0.9s -> FINALIZING
+FINALIZING -> Model 6 + CTC -> RESULT -> ready for next sign
+```
+
+The motion score weights hand movement most heavily, then wrist/arm movement, then lower-weight body movement. Model 6 is not changed.
+Idle landmark jitter is treated as background noise: the backend requires repeated hand motion, enough active frames, and minimum average motion before it runs Model 6 for a live draft or final sentence.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  A["Browser webcam preview"] --> B["MediaRecorder completed clip"]
-  B --> C["FastAPI multipart upload"]
-  C --> D["OpenCV video decode"]
-  D --> E["MediaPipe VIDEO landmark extraction"]
+  A["Browser live camera"] --> B["Compressed frame batches"]
+  B --> C["FastAPI live session"]
+  C --> E["MediaPipe VIDEO landmark extraction"]
+  U["Uploaded video clip"] --> D["OpenCV video decode"]
+  D --> E
   E --> F["[T, 1662] sequence"]
   F --> G["25 FPS resampling, max 384 frames"]
   G --> H["Model 6"]
@@ -29,7 +42,7 @@ flowchart LR
 
 - Python 3.10, 3.11, or 3.12 recommended. MediaPipe and PyTorch wheels may not be available for every Python 3.13 environment.
 - Node.js 20+.
-- A browser with `getUserMedia` and `MediaRecorder`.
+- A browser with `getUserMedia`.
 - The supplied Model 6 files:
   - `backend/models/model6_best_wer_checkpoint.pt`
   - `backend/models/bangla_vocab_tsv_fixed.json`
@@ -125,11 +138,13 @@ Important backend settings:
 - `MODEL_CHECKPOINT_PATH`
 - `VOCAB_PATH`
 - `MEDIAPIPE_ASSET_DIR`
+- `INFERENCE_ARTIFACT_DIR`
 - `MAX_UPLOAD_MB`
 - `MAX_VIDEO_SECONDS`
 - `CORS_ORIGINS`
 - `HOST`
 - `PORT`
+- `SAVE_INFERENCE_ARTIFACTS=true` writes upload/live final raw landmark and 25 FPS feature arrays for A/B debugging.
 
 Frontend:
 
@@ -142,11 +157,17 @@ When `VITE_API_BASE_URL` is empty, Vite proxies `/api` to `http://127.0.0.1:8000
 - `GET /api/health`
 - `GET /api/model/info`
 - `POST /api/inference/video`
+- `POST /api/inference/frames`
+- `POST /api/inference/live`
 - `GET /api/history`
 - `DELETE /api/history`
 - `DELETE /api/history/{id}`
 
-`POST /api/inference/video` accepts multipart form data with field name `file`.
+`POST /api/inference/video` accepts multipart form data with field name `file`. Optional form field `save_history=false` skips history writes.
+
+`POST /api/inference/live` accepts JSON frame batches with an optional `session_id`. It returns the live session id even when the current partial is too short to decode, allowing the frontend to keep accumulating landmarks instead of restarting.
+The live response also reports current `capture_fps` and pose/hand detection rates so webcam preprocessing quality can be compared with uploaded video diagnostics.
+The Live page records the same camera stream during a session; after pausing, use **Download Clip** and submit that file on the Upload page to compare the exact webcam recording against the live `[T,1662]` path.
 
 ## Model Contract
 
@@ -185,7 +206,7 @@ Some backend tests require PyTorch, OpenCV, MediaPipe, FastAPI, and the model fi
 ## Camera Notes
 
 - Browser preview may be visually mirrored with CSS.
-- The recorded video is not flipped before upload.
+- Live camera translation sends compressed video frames to the configured backend API.
 - Audio is not requested.
 - Camera tracks are stopped when switching devices or leaving the recognition page.
 
@@ -193,9 +214,8 @@ Some backend tests require PyTorch, OpenCV, MediaPipe, FastAPI, and the model fi
 
 Default behavior:
 
-- Camera preview stays in the browser.
-- The completed recording is uploaded only after Stop.
-- The backend processes it for inference.
+- Live camera sends compressed frame batches only while the camera is on.
+- Uploaded video clips are processed for inference.
 - Temporary video files are deleted in a `finally` block after inference.
 - Raw video is not saved by default.
 - History stores structured prediction metadata only.
@@ -211,12 +231,11 @@ The backend uses CUDA when PyTorch reports it is available. CUDA autocast is ena
 - MediaPipe startup failure: run `python backend/scripts/download_mediapipe_models.py`.
 - Camera denied: reset browser site permissions and reload.
 - Unsupported video: use Chrome or Edge with WebM MediaRecorder support.
-- Too short: record one complete sentence longer than the configured minimum.
+- Too short: provide one complete sentence longer than the configured minimum.
 - Sequence too long: keep one sentence under about 15 seconds.
 
 ## Known Limitations
 
-Model 6 is a full-sequence/non-causal encoder. The final sentence is generated after the user finishes the sign sequence.
+Model 6 is a full-sequence/non-causal encoder. Live camera output is finalized after sentence-end detection; uploaded videos and clean live windows usually provide the most stable sentence.
 
 The confidence value is an uncalibrated greedy-decoding heuristic, not a calibrated probability.
-
