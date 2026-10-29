@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from evaluate_videos import revision, sha256, source_fingerprints
+from evaluate_videos import processor_name, revision, sha256, source_fingerprints
 from app.utils.evaluation import latency_summary
 
 
@@ -59,7 +59,7 @@ def main() -> None:
         "source_files_sha256": source_fingerprints(),
         "checkpoint_sha256": sha256(settings.checkpoint_path), "vocab_sha256": sha256(settings.vocab_path),
         "model": runtime.info(settings.max_sequence_length, settings.target_fps),
-        "environment": {"platform": platform.platform(), "processor": platform.processor(),
+        "environment": {"platform": platform.platform(), "processor": processor_name(),
                         "python": platform.python_version(), "torch": torch.__version__,
                         "numpy": np.__version__, "torch_threads": torch.get_num_threads(),
                         "cuda_device": torch.cuda.get_device_name() if runtime.device.type == "cuda" else None},

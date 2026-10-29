@@ -111,7 +111,7 @@ required on a headless server):
 
 ```bash
 sudo apt-get update
-sudo apt-get install --yes libegl1 libgl1
+sudo apt-get install --yes libegl1 libgl1 libgles2
 ```
 
 ```bash

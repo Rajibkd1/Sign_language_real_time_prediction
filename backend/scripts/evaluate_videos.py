@@ -40,6 +40,15 @@ def source_fingerprints() -> dict[str, str]:
             for folder in ("app", "scripts") for path in sorted((backend / folder).rglob("*.py"))}
 
 
+def processor_name() -> str:
+    cpuinfo = Path("/proc/cpuinfo")
+    if cpuinfo.is_file():
+        for line in cpuinfo.read_text(encoding="utf-8").splitlines():
+            if line.startswith("model name"):
+                return line.partition(":")[2].strip()
+    return platform.processor() or "unknown"
+
+
 def read_manifest(path: Path) -> list[dict]:
     rows, ids = [], set()
     for number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
@@ -122,7 +131,7 @@ def main() -> int:
             "checkpoint_sha256": sha256(settings.checkpoint_path), "vocab_sha256": sha256(settings.vocab_path),
             "mediapipe_assets": {p.name: sha256(p) for p in sorted(settings.mediapipe_asset_dir.glob('*.task'))},
             "model": service.model_info(), "settings": asdict(settings),
-            "environment": {"platform": platform.platform(), "processor": platform.processor(),
+            "environment": {"platform": platform.platform(), "processor": processor_name(),
                             "python": platform.python_version(), "torch": torch.__version__,
                             "opencv": cv2.__version__, "mediapipe": mediapipe.__version__,
                             "device": str(service.runtime.device), "torch_threads": torch.get_num_threads()},
