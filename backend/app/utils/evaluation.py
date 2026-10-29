@@ -12,6 +12,24 @@ def normalize_text(text: str) -> str:
     return " ".join(unicodedata.normalize("NFC", text).split())
 
 
+def normalize_bdsl_v1(text: str, vocabulary: set[str]) -> str:
+    """Explicit training-notebook convention; preserve lexical hyphens in known words."""
+    value = normalize_text(text)
+    vocabulary = {normalize_text(word) for word in vocabulary}
+    zero_width = {"\u200b", "\u200c", "\u200d", "\ufeff"}
+    dashes = {"-", "\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2212"}
+    cleaned = "".join("-" if ch in dashes else " " if unicodedata.category(ch).startswith("P")
+                      else ch for ch in value if ch not in zero_width)
+    words = []
+    for token in cleaned.split():
+        parts = [part for part in token.split("-") if part]
+        if token not in vocabulary and "-" in token and parts and all(p in vocabulary for p in parts):
+            words.extend(parts)
+        else:
+            words.append(token)
+    return " ".join(words)
+
+
 @dataclass(frozen=True)
 class WordEdits:
     substitutions: int = 0
@@ -44,15 +62,24 @@ def word_edits(reference: str, prediction: str) -> WordEdits:
     return previous[-1]
 
 
-def score_records(records: list[dict]) -> dict:
+def score_records(records: list[dict], *, normalization: str = "nfc-whitespace",
+                  vocabulary: set[str] | None = None) -> dict:
     """Corpus WER (not mean sample WER); failed decodes must have an empty prediction."""
     if not records:
         raise ValueError("Evaluation requires at least one sample.")
+    if normalization == "bdsl-v1":
+        if not vocabulary:
+            raise ValueError("bdsl-v1 normalization requires the evaluated model vocabulary.")
+        normalizer = lambda value: normalize_bdsl_v1(value, vocabulary)
+    elif normalization == "nfc-whitespace":
+        normalizer = normalize_text
+    else:
+        raise ValueError("Unknown normalization protocol.")
     totals = {"substitutions": 0, "deletions": 0, "insertions": 0}
     words = exact = 0
     for record in records:
-        reference = normalize_text(record["reference"])
-        prediction = normalize_text(record["prediction"])
+        reference = normalizer(record["reference"])
+        prediction = normalizer(record["prediction"])
         if not reference:
             raise ValueError("Each evaluation reference must contain at least one word.")
         edits = word_edits(reference, prediction)
@@ -66,7 +93,7 @@ def score_records(records: list[dict]) -> dict:
         "wer_percent": 100.0 * sum(totals.values()) / words,
         "exact_sentences": exact,
         "exact_sentence_accuracy_percent": 100.0 * exact / len(records),
-        "normalization": "Unicode NFC and collapsed whitespace; punctuation retained",
+        "normalization": normalization,
     }
 
 

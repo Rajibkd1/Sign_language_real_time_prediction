@@ -59,3 +59,28 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+
+  code-prerelease:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build code-only prerelease after verification
+        run: python backend/scripts/build_code_release.py --version 0.1.0-rc.1 --output release-artifacts --ci-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Verify the packaged source without model binaries
+        run: |
+          python -m pip install "pytest>=8.2.0"
+          python -c "import zipfile; zipfile.ZipFile('release-artifacts/BdSL-Vision-0.1.0-rc.1-source.zip').extractall('release-artifacts/smoke')"
+          python -m pytest release-artifacts/smoke/BdSL-Vision-0.1.0-rc.1/backend/tests/test_evaluation.py release-artifacts/smoke/BdSL-Vision-0.1.0-rc.1/backend/tests/test_evaluation_runner.py release-artifacts/smoke/BdSL-Vision-0.1.0-rc.1/backend/tests/test_prepare_video_evaluation.py release-artifacts/smoke/BdSL-Vision-0.1.0-rc.1/backend/tests/test_asset_download.py release-artifacts/smoke/BdSL-Vision-0.1.0-rc.1/backend/tests/test_code_release.py -q -k "not bundled"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bdsl-code-prerelease
+          path: |
+            release-artifacts/*-source.zip
+            release-artifacts/RELEASE_MANIFEST.json
+            release-artifacts/SHA256SUMS
+          retention-days: 14

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "kind": "split_preparation_only",
+  "accuracy_measured": false,
+  "vocab_sha256": "f0caeca2eb5afb6b4dca7e7182a5a5d644cf3f6a0853b40cb0088e0fafca7444",
+  "source_tsv_sha256": {
+    "train": "05db73dbde2cd2ca0a1ee54c82f7afa98f15aa504d52e050b74f71a203c389bd",
+    "val": "0e8519010ea4c89c20e7eb31d40758c5bfd4167b1b7ef6f69dd4329b25b30a75",
+    "test": "ef3e58b0decc8e034f8ffc09e813894138798844f3a83d09205875f8bc49e9ba"
+  },
+  "normalization": "bdsl-v1",
+  "sentence_groups_disjoint": true,
+  "video_mapped_splits": [
+    "test"
+  ],
+  "training_membership_of_checkpoint_verified": false,
+  "video_id_mapping": "numeric suffix indexes lexicographically sorted MP4 names in the sentence folder",
+  "splits": {
+    "train": {
+      "samples": 8165,
+      "groups": 1633
+    },
+    "val": {
+      "samples": 960,
+      "groups": 192
+    },
+    "test": {
+      "samples": 485,
+      "groups": 97
+    }
+  },
+  "manifest_sha256": {
+    "train": "9248230a9906180a73485b504c436744b5489fdb92fa59b8222a2557fac5f344",
+    "val": "db03ed41ef34c30d86c8f915652485acb45e4e440115b8731c2901d9177705f5",
+    "test": "a36ff05e14c1c844e4e472c6cca26d33fc9f6379fee96c0164e243a0b74dbd84"
+  }
+}

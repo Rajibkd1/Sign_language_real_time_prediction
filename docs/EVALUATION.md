@@ -59,6 +59,22 @@ to make incompatible weights or experimental results interchangeable.
 
 ## Current application evidence
 
+The [checkpoint's embedded validation metadata](evaluation/model6-checkpoint-validation-metadata.json)
+has now been inspected: epoch 14, 960 samples, saved WER 1.785714%, CER
+1.008358%, exact sentence accuracy 92.1875% (885/960), and all five stored
+prediction examples. These are historical values inside the exact bundled
+checkpoint, not independently reproduced video evaluation or held-out test
+results. The checkpoint internally identifies itself as Model 5.1, release
+v1.1; the application calls the architecture Model 6.
+
+The located local split has 8,165 train, 960 validation and 485 test records;
+its fixed vocabulary matches the bundled mapping. It differs from the later
+report's split. `prepare_video_evaluation.py` audits sentence groups and maps
+sample suffixes to the extraction script's sorted MP4 enumeration. Preparation
+does not prove which samples trained this checkpoint. Its manifests stay private;
+the [preparation audit](evaluation/model6-local-split-preparation.json) publishes
+counts, disjointness checks and hashes without local video paths.
+
 - Recognition WER and real labeled prediction examples: **not yet measured
   from an available labeled video set in this checkout**.
 - Full video-pipeline and browser/live latency: **not yet measured**.
@@ -114,7 +130,8 @@ python backend/scripts/evaluate_videos.py evaluation-private/test.jsonl --split 
 ```
 
 The script checks sample IDs, files, and sentence-group overlap against supplied
-exclusions before loading the model. All manifests use the same schema. The
+exclusions before loading the model. Exclusion manifests may omit `video`, since
+checking their sentence groups does not require access to training videos. The
 `--split` name is a user-supplied label; it does not prove a held-out split. The
 script does not establish signer independence, source-wide deduplication, or
 alignment with the report's original split. Keep test groups out of training,
@@ -125,6 +142,13 @@ of per-clip WER. Text uses Unicode NFC and collapsed whitespace, preserving
 punctuation and case. This explicit scoring convention may differ from the
 report's preprocessing. Exact sentence accuracy uses the same normalization.
 Equal-cost edit alignments prefer substitution, then deletion, then insertion.
+
+For the located 1662D training pipeline, explicitly pass `--normalization bdsl-v1`.
+This removes Unicode punctuation and zero-width characters, normalizes Bangla
+text and vocabulary to NFC, and preserves known lexical hyphens. The default
+`nfc-whitespace` mode retains punctuation. The selected mode is recorded in
+results; original references and predictions remain intact. This avoids counting
+a reference's Bangla sentence-ending punctuation as an artificial word error.
 
 Failed inference is saved with an empty prediction, counts all reference words
 as deletions, and makes the command exit with code 1 **after writing the report**.

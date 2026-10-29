@@ -22,6 +22,12 @@ matching preprocessing, and a repeatable evaluation with documented provenance.
 
 Tracked in [issue #2](https://github.com/Rajibkd1/Sign_language_real_time_prediction/issues/2).
 
+Completed for the code-only prerelease: official MediaPipe model-card license
+checks, exact source generations and hashes, verified downloads, Apache license
+attribution, and binary/data archive exclusions. The maintainer has confirmed
+original training/authorship. Publisher dataset permission and a separate
+project-weight distribution grant remain unresolved; this issue stays open.
+
 Obtain explicit licensing and distribution evidence for the bundled Model 6
 weights/vocabulary and the training dataset. Verify exact MediaPipe task bundle
 terms and record immutable sources. Replace or stop distributing any artifact
@@ -34,6 +40,13 @@ texts, attribution and use/redistribution permissions.
 ## Publish current-checkpoint video evidence
 
 Tracked in [issue #3](https://github.com/Rajibkd1/Sign_language_real_time_prediction/issues/3).
+
+The current checkpoint's saved validation metadata and all five stored examples
+are now extracted with their historical scope. The located local split has
+485 test videos, has disjoint sentence groups, and can be prepared without
+exposing raw videos. Explicit training-compatible text normalization is
+implemented. Fresh video inference, candidate comparison and full browser/live
+latency remain unmeasured; this issue stays open.
 
 Use `backend/scripts/evaluate_videos.py` on consented, labeled clips with
 disjoint sentence groups and documented annotation. Publish all predictions

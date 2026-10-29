@@ -60,3 +60,11 @@ def test_manifest_rejects_missing_media_and_empty_references(tmp_path):
                                         "group_id": "g"}), encoding="utf-8")
         with pytest.raises(ValueError):
             read_manifest(manifest)
+
+
+def test_exclusion_manifest_checks_groups_without_training_video_access(tmp_path):
+    manifest = tmp_path / "train.jsonl"
+    manifest.write_text(json.dumps({"id": "a", "group_id": "g", "reference": "আমি"}), encoding="utf-8")
+    assert read_manifest(manifest, require_videos=False)[0]["group_id"] == "g"
+    with pytest.raises(ValueError, match="video"):
+        read_manifest(manifest)

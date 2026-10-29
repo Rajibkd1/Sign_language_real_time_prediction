@@ -1,8 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-rc.1 (2026-10-29)
+
+Code-only prerelease. Checkpoints, vocabularies, model binaries and datasets are
+excluded from archives. Research asset permissions and full labeled video/live
+evaluation remain open in issues #2 and #3.
 
 ### Added
+
+- Reproducible source packaging, per-file release manifest, SHA-256 checksums,
+  and archive tests that reject leaked model/data assets.
+- Pinned MediaPipe model versions/generations with verified SHA-256 and official
+  Apache-2.0 model-card attribution.
+- Split/recording preparation and explicit training-compatible text scoring.
+- Historical validation metadata extracted from the exact bundled checkpoint,
+  explicitly distinguished from a new inference run.
 
 - MIT license for original code and documentation, with separate research asset
   rights and provenance notes.

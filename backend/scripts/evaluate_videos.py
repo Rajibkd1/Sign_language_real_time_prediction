@@ -49,22 +49,24 @@ def processor_name() -> str:
     return platform.processor() or "unknown"
 
 
-def read_manifest(path: Path) -> list[dict]:
+def read_manifest(path: Path, *, require_videos: bool = True) -> list[dict]:
     rows, ids = [], set()
     for number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
         if not line.strip():
             continue
         row = json.loads(line)
-        for key in ("id", "video", "reference", "group_id"):
+        for key in (("id", "video", "reference", "group_id") if require_videos else ("id", "reference", "group_id")):
             if not isinstance(row.get(key), str) or not row[key].strip():
                 raise ValueError(f"Line {number}: {key} must be a nonempty string.")
         if row["id"] in ids:
             raise ValueError(f"Duplicate sample ID: {row['id']}")
         ids.add(row["id"])
-        video = (path.parent / row["video"]).resolve()
-        if not video.is_file():
-            raise ValueError(f"Line {number}: video file does not exist.")
-        rows.append({**row, "video": video})
+        if require_videos:
+            video = (path.parent / row["video"]).resolve()
+            if not video.is_file():
+                raise ValueError(f"Line {number}: video file does not exist.")
+            row = {**row, "video": video}
+        rows.append(row)
     if not rows:
         raise ValueError("Manifest is empty.")
     return rows
@@ -96,6 +98,7 @@ def main() -> int:
     parser.add_argument("manifest", type=Path, help="JSONL: id, video, reference, group_id")
     parser.add_argument("--split", required=True, choices=("validation", "test", "demo"))
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--normalization", choices=("nfc-whitespace", "bdsl-v1"), default="nfc-whitespace")
     parser.add_argument("--exclude-manifest", action="append", default=[], type=Path,
                         help="Train/validation manifests whose sentence groups must not overlap; repeatable")
     args = parser.parse_args()
@@ -105,7 +108,7 @@ def main() -> int:
     evaluated_groups = {row["group_id"] for row in rows}
     excluded = []
     for other in args.exclude_manifest:
-        other_rows = read_manifest(other)
+        other_rows = read_manifest(other, require_videos=False)
         if evaluated_groups & {row["group_id"] for row in other_rows}:
             parser.error("Sentence groups overlap an excluded manifest.")
         excluded.append({"sha256": sha256(other), "groups": len({r['group_id'] for r in other_rows})})
@@ -135,7 +138,9 @@ def main() -> int:
                             "python": platform.python_version(), "torch": torch.__version__,
                             "opencv": cv2.__version__, "mediapipe": mediapipe.__version__,
                             "device": str(service.runtime.device), "torch_threads": torch.get_num_threads()},
-            "metrics": score_records(samples), "failed_samples": sum(s['status'] == 'error' for s in samples),
+            "metrics": score_records(samples, normalization=args.normalization,
+                                     vocabulary=set(service.runtime.id2word.values())),
+            "failed_samples": sum(s['status'] == 'error' for s in samples),
             "pipeline_wall_latency": latency_summary(wall_times),
             "selected_forward_latency_successes_only": latency_summary(model_times) if model_times else None,
             "timing_scope": "Per-video predict_video wall time, including decode, landmarks, candidate forwards and CTC; excludes startup, file hashing, HTTP transfer and browser. Selected model_ms is one chosen candidate's forward only.",

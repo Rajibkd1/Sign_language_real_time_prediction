@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from app.utils.evaluation import latency_summary, normalize_text, score_records, word_edits
+from app.utils.evaluation import latency_summary, normalize_bdsl_v1, normalize_text, score_records, word_edits
 
 
 def test_substitution_deletion_and_insertion():
@@ -33,6 +33,25 @@ def test_unicode_and_whitespace_normalization_retains_punctuation():
 def test_insertions_can_make_wer_exceed_100_percent():
     result = score_records([{"reference": "আমি", "prediction": "সে ভাত খাবে"}])
     assert result["wer_percent"] == 300.0
+
+
+def test_training_normalization_is_explicit_and_does_not_change_default_scoring():
+    rows = [{"reference": "আমি খাই।", "prediction": "আমি খাই"}]
+    assert score_records(rows)["wer_percent"] == 50.0
+    assert score_records(rows, normalization="bdsl-v1", vocabulary={"আমি", "খাই"})["wer_percent"] == 0.0
+    assert rows[0]["reference"] == "আমি খাই।"
+    with pytest.raises(ValueError, match="vocabulary"):
+        score_records(rows, normalization="bdsl-v1")
+
+
+def test_training_normalization_preserves_known_compounds_and_removes_zero_width():
+    vocab = {"চা-কফি", "চা", "কফি", "খাই"}
+    assert normalize_bdsl_v1("চা—কফি খা\u200dই।", vocab) == "চা-কফি খাই"
+    assert normalize_bdsl_v1("চা-কফি", {"চা", "কফি"}) == "চা কফি"
+
+
+def test_training_vocabulary_comparison_normalizes_bangla_ye():
+    assert normalize_bdsl_v1("খেয়ো-খায়নি", {"খেয়ো", "খায়নি"}) == "খেয়ো খায়নি"
 
 
 @pytest.mark.parametrize("rows", [[], [{"reference": " \n", "prediction": "খাই"}]])

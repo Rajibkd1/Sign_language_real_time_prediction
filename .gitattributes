@@ -1,0 +1,12 @@
+# Omit research/model assets from source archives without deleting development files.
+*.pt export-ignore
+*.pth export-ignore
+*.task export-ignore
+*.onnx export-ignore
+*.safetensors export-ignore
+*.npy export-ignore
+*.npz export-ignore
+*.mp4 export-ignore
+*.webm export-ignore
+bangla_vocab*.json export-ignore
+.vscode export-ignore

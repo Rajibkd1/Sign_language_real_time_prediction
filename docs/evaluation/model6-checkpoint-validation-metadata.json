@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "kind": "checkpoint_embedded_historical_validation",
+  "independently_reproduced": false,
+  "video_evaluation_completed": false,
+  "checkpoint_sha256": "219c8881324ba092a1d877eddb226189a55425b1746b8c149bf7d02620f46bd4",
+  "model_variant": "model5_1_lite_region_motion_dwconv_transformer_ctc_v1.1",
+  "release_version": "v1.1",
+  "checkpoint_kind": "BEST_WER",
+  "epoch": 14,
+  "parameter_counts": {
+    "trainable": 4924163,
+    "total": 4924163
+  },
+  "architecture": {
+    "feature_dim": 1662,
+    "modality_dims": [
+      132,
+      1404,
+      63,
+      63
+    ],
+    "region_embedding_dims": [
+      64,
+      64,
+      96,
+      96
+    ],
+    "d_model": 320,
+    "velocity_stream": true,
+    "temporal_kernel_size": 7,
+    "temporal_subsample_stride": 2,
+    "transformer_layers": 4,
+    "attention_heads": 8,
+    "ffn_dim": 960,
+    "dropout": 0.15
+  },
+  "metrics": {
+    "loss": 0.03883801229918996,
+    "wer": 0.017857142857142856,
+    "cer": 0.010083580479913723,
+    "sentence_accuracy": 0.921875,
+    "exact_matches": 885,
+    "sample_count": 960,
+    "substitution": 73,
+    "deletion": 1,
+    "insertion": 1,
+    "samples": [
+      {
+        "ground_truth": "খালা বিকালে চা খায়নি",
+        "prediction": "খালা বিকালে চা খায়নি",
+        "exact": true,
+        "substitution": 0,
+        "deletion": 0,
+        "insertion": 0
+      },
+      {
+        "ground_truth": "চাচী দুপুরে মাংস খায়নি",
+        "prediction": "চাচী দুপুরে মাংস খায়নি",
+        "exact": true,
+        "substitution": 0,
+        "deletion": 0,
+        "insertion": 0
+      },
+      {
+        "ground_truth": "বাবা রাতে কফি খায়নি",
+        "prediction": "বাবা রাতে কফি খায়নি",
+        "exact": true,
+        "substitution": 0,
+        "deletion": 0,
+        "insertion": 0
+      },
+      {
+        "ground_truth": "বাবা সকালে কফি খান না",
+        "prediction": "বাবা সকালে কফি খান না",
+        "exact": true,
+        "substitution": 0,
+        "deletion": 0,
+        "insertion": 0
+      },
+      {
+        "ground_truth": "চাচা রাতে কফি খেয়েছিল",
+        "prediction": "চাচা রাতে কফি খেয়েছিল",
+        "exact": true,
+        "substitution": 0,
+        "deletion": 0,
+        "insertion": 0
+      }
+    ]
+  },
+  "sample_selection": "All five examples stored in the checkpoint; not a full prediction log",
+  "limitations": [
+    "Historical saved validation metadata; no independent inference run performed",
+    "No original split fingerprints or sample IDs are stored with these examples",
+    "The local candidate split has 485 test clips; this does not establish the checkpoint training membership",
+    "Not the final report 646D model and not held-out test evidence"
+  ]
+}

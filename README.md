@@ -58,6 +58,11 @@ flowchart LR
   - `backend/models/model6_best_wer_checkpoint.pt`
   - `backend/models/bangla_vocab_tsv_fixed.json`
 
+The code-only prerelease/source archives exclude checkpoints, vocabularies,
+MediaPipe binaries and datasets. Archive users must supply a compatible model
+and vocabulary with appropriate permissions before inference can become ready.
+The MediaPipe download script retrieves pinned, hash-verified upstream assets.
+
 ## Project Structure
 
 ```text

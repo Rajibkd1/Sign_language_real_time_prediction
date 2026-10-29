@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-10-29",
+  "publisher": "Google MediaPipe",
+  "license": "Apache-2.0",
+  "license_file": "../../../LICENSES/Apache-2.0.txt",
+  "assets": {
+    "pose_landmarker.task": {
+      "url": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task?generation=1682642785209422",
+      "version": "1",
+      "generation": "1682642785209422",
+      "size_bytes": 9398198,
+      "sha256": "5134a3aad27a58b93da0088d431f366da362b44e3ccfbe3462b3827a839011b1",
+      "documentation": "https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker",
+      "model_cards": ["https://storage.googleapis.com/mediapipe-assets/Model%20Card%20BlazePose%20GHUM%203D.pdf"]
+    },
+    "hand_landmarker.task": {
+      "url": "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task?generation=1682480004222387",
+      "version": "1",
+      "generation": "1682480004222387",
+      "size_bytes": 7819105,
+      "sha256": "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1",
+      "documentation": "https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker",
+      "model_cards": ["https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Hand%20Tracking%20(Lite_Full)%20with%20Fairness%20Oct%202021.pdf"]
+    },
+    "face_landmarker.task": {
+      "url": "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task?generation=1683136941916318",
+      "version": "1",
+      "generation": "1683136941916318",
+      "size_bytes": 3758596,
+      "sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+      "documentation": "https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker",
+      "model_cards": [
+        "https://storage.googleapis.com/mediapipe-assets/MediaPipe%20BlazeFace%20Model%20Card%20(Short%20Range).pdf",
+        "https://storage.googleapis.com/mediapipe-assets/Model%20Card%20MediaPipe%20Face%20Mesh%20V2.pdf",
+        "https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf"
+      ]
+    }
+  }
+}
