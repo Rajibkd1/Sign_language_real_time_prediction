@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "kind": "synthetic_latency_only",
+  "accuracy_measured": false,
+  "created_at_utc": "2026-10-29T13:07:51.768323+00:00",
+  "git_revision": "e514b7b7835316934d029bda39a45fc7909ba024",
+  "source_files_sha256": {
+    "app/__init__.py": "d540b6803294ac0a446a02d48450547d8aabf00372d74a01a1cc293b1790b827",
+    "app/api/__init__.py": "55dcea48413a429bb625b1e2dc686b7ff576d93082ec584be405f40c98367160",
+    "app/api/health.py": "f3635f043d25ae430ceb7d11cc0ab00046198b4bec5a1a6d0b93613ab3cc5738",
+    "app/api/history.py": "713aaa04584e7d2a9c9975be3c26f2aa338109eaab05963631f654c26ad797ec",
+    "app/api/inference.py": "60cdd0a630f07f12ae103b7a4d7f1ec269cf60b91192aa1c1413239ca5f23599",
+    "app/api/model_info.py": "70d5384d9dd7c9f4974dd363120badbb9491120b3c1efc536aa3bb358a690216",
+    "app/config.py": "82b7eec9da9c697cb9e73ab2e6bfd78e90ef37270ba38640750483486d2de37e",
+    "app/errors.py": "5ca8a586957ff76523b8b27bd22bb0e7bbaf78d0a535251c84bec9a9b758cab1",
+    "app/main.py": "0ef1a1c8c54d4a30ea41abf1d56bbe2854f371d9ebecd7a892387f9e06eee9a2",
+    "app/main_cli.py": "908f27bddd8146de55ab70bf44a47b45db85637464c5fb94976c2913df156704",
+    "app/model/__init__.py": "e315eb60d153cdb61df9f1870a209032097a3ccd47be417ebf6e62ee4c800dc5",
+    "app/model/checkpoint.py": "99701a8ad3e83064d2cbf9143cf9d7887e4086dda7a4a4401b85a302b728bc24",
+    "app/model/model6.py": "e51fdf57352f4905334df17ae6292ea525de068d9303d1b5faefbc012acfc3f6",
+    "app/schemas.py": "9f94b4a0b6b66a6a686dfa56bf032b312bef371fb333833807c197ac199ace0b",
+    "app/services/__init__.py": "348afee3165d0ab6b20bb10a914a19c3c0aa13b4d08329fc77f72b769b84bbd5",
+    "app/services/history_service.py": "e646466d08737ea755ff3733fa3b072e1e9c519f67af7edfbb5344dc05e15783",
+    "app/services/inference_service.py": "7d07e8697b520f43022e11d4c550dece751acdf4993afbabf1ab00b87d4d4485",
+    "app/services/mediapipe_service.py": "0e9c2d52fc8fd419a3d28180bb872e1cd3a3655d0cb6741a6042c27664d2495a",
+    "app/services/video_service.py": "ee40fb8ecc2287c9c4e2df1ec682888de550c4858b4c3eb1f9f41ad123492527",
+    "app/utils/__init__.py": "1b842bc77eee18387c6c07a3bc3a0406e3c8587a59a404c9dfe22af1233f3da3",
+    "app/utils/ctc.py": "9720f93d74d3125a806ab328b8cc3659aaaba28700c39ccf1757948d2c52ebcc",
+    "app/utils/evaluation.py": "79ada09ee8be4bbb331e523792ccc80fb8942f51d1387c85841885f167b25e0d",
+    "app/utils/sequence.py": "ecaa489ca1ccf0fb1fdfa8be5f6bf1efc3f96f8798fd9d89afb294d761222f2d",
+    "app/utils/vocab.py": "7314f54607836bb04254e17ba20b7e11e564c557a5ad19ccb761a1e1a9f94232",
+    "scripts/benchmark_model.py": "7f849f26cdb50bece32f67745d4d5a765941404e9381b7739867c9491848a681",
+    "scripts/download_mediapipe_models.py": "a4a1d8212dbc7e924ff82655b722ca23a86d69d9115ce5bc31de042fda83165d",
+    "scripts/evaluate_videos.py": "73efae3bcbf271ed826770b24c6e6408355350416d60bc26193c6ac163cac061"
+  },
+  "checkpoint_sha256": "219c8881324ba092a1d877eddb226189a55425b1746b8c149bf7d02620f46bd4",
+  "vocab_sha256": "0d53d025dbde2f9d28292e0ba064369baceb1b18788ab7aac6747054fd692d0a",
+  "model": {
+    "model": "Model 6",
+    "architecture": "Lightweight Region-Motion Depthwise Conv-Transformer + Word-Level CTC",
+    "parameters": 4924163,
+    "vocab_size": 39,
+    "blank_index": 0,
+    "weight_source": "ema_state",
+    "device": "cpu",
+    "max_sequence_length": 384,
+    "target_fps": 25.0,
+    "ready": true
+  },
+  "environment": {
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.43",
+    "processor": "AMD EPYC 9V45 96-Core Processor",
+    "python": "3.12.15",
+    "torch": "2.15.0+cpu",
+    "numpy": "2.5.4",
+    "torch_threads": 1,
+    "cuda_device": null
+  },
+  "input": "all-zero float32 [T,1662]; synthetic, not signing video",
+  "warmup_per_length": 5,
+  "runs_per_length": 30,
+  "use_amp": true,
+  "scope": "forward is timed model forward only; predict_wall includes tensor preparation, forward, greedy CTC, confidence and cleanup. Both exclude video decode, MediaPipe, transport, browser and sentence-end waiting.",
+  "results": [
+    {
+      "frames": 128,
+      "batch_size": 1,
+      "forward": {
+        "count": 30,
+        "mean_ms": 10.693138000000602,
+        "p50_ms": 10.650299000005248,
+        "p95_ms": 10.961714000004008,
+        "min_ms": 10.471971999990615,
+        "max_ms": 11.274923999991415
+      },
+      "predict_wall": {
+        "count": 30,
+        "mean_ms": 10.913137399998144,
+        "p50_ms": 10.873001999996745,
+        "p95_ms": 11.196166000004837,
+        "min_ms": 10.680413000002886,
+        "max_ms": 11.507582000007233
+      }
+    },
+    {
+      "frames": 384,
+      "batch_size": 1,
+      "forward": {
+        "count": 30,
+        "mean_ms": 34.4388431333338,
+        "p50_ms": 33.94516400000214,
+        "p95_ms": 40.39898599999958,
+        "min_ms": 33.396099000000845,
+        "max_ms": 41.02827799999886
+      },
+      "predict_wall": {
+        "count": 30,
+        "mean_ms": 34.72834360000122,
+        "p50_ms": 34.22063399999331,
+        "p95_ms": 40.67833400000609,
+        "min_ms": 33.68554300000426,
+        "max_ms": 41.30485200001033
+      }
+    }
+  ]
+}

@@ -10,6 +10,8 @@
   from this repository's 1662D Model 6.
 - Corpus WER scoring, labeled-video evaluation and synthetic latency benchmark
   tools, plus scoring regression tests.
+- An archived synthetic CPU benchmark with checkpoint/source fingerprints and
+  measured timing scope; recognition accuracy remains unevaluated for Model 6.
 - Contribution and maintainer guides, CODEOWNERS, issue and pull request
   templates, and backend/frontend CI checks.
 

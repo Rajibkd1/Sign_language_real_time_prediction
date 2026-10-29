@@ -68,6 +68,31 @@ to make incompatible weights or experimental results interchangeable.
 - Automated unit/API tests validate behavior and contracts; mocked responses in
   tests are not real prediction examples.
 
+## Measured synthetic CPU latency
+
+The [2026-10-29 CI run](https://github.com/Rajibkd1/Sign_language_real_time_prediction/actions/runs/40878967048)
+passed 42 backend tests, 9 frontend tests, the frontend build and the checkpoint
+benchmark at code revision `e514b7b7835316934d029bda39a45fc7909ba024`.
+The [archived raw JSON](evaluation/model6-synthetic-cpu-2026-10-29.json) records
+the exact checkpoint, vocabulary and Python source hashes.
+
+Environment: Linux GitHub runner, AMD EPYC 9V45 CPU, Python 3.12.15, PyTorch
+2.15.0+cpu, NumPy 2.5.4, one PyTorch thread, batch size one, FP32 CPU execution.
+Each length used five warm-up calls and 30 measured calls with all-zero
+float32 `[T,1662]` input.
+
+| Frames | Forward p50 | Forward p95 | Predict wall p50 | Predict wall p95 |
+| ---: | ---: | ---: | ---: | ---: |
+| 128 | 10.650 ms | 10.962 ms | 10.873 ms | 11.196 ms |
+| 384 | 33.945 ms | 40.399 ms | 34.221 ms | 40.678 ms |
+
+`predict` wall time includes tensor preparation, model forward, greedy CTC,
+confidence and cleanup. These measurements exclude video decoding, MediaPipe,
+network transfer, browser overhead, startup and sentence-end waiting. This is
+one synthetic execution benchmark, with no recognition accuracy or real signing
+examples measured. Shared runner performance can vary; these numbers are not a
+claim about the maintainer's laptop or a user's full application latency.
+
 ## Evaluate labeled videos
 
 Use the backend environment from the README. Create a private UTF-8 JSONL file,
