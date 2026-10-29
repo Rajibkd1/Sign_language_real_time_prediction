@@ -22,3 +22,10 @@
 
 - Matching 646D research artifacts, independently reproduced accuracy, real
   labeled Model 6 examples, complete application latency and asset permissions.
+
+### Fixed
+
+- Invalid upload metadata now returns HTTP 400 even when inference is
+  unavailable; valid metadata still returns HTTP 503 without storing the upload.
+- Linux CI installs MediaPipe's EGL/GL runtime libraries and explicitly tests
+  readiness with the bundled model assets.

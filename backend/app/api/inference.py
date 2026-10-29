@@ -9,7 +9,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.errors import BdSLVisionError, InvalidUploadError, ModelNotReadyError
 from app.schemas import ErrorResponse, FrameInferenceRequest, InferenceResponse, LiveInferenceRequest, LiveInferenceResponse
-from app.services.video_service import delete_temp_files, store_upload_to_temp
+from app.services.video_service import delete_temp_files, store_upload_to_temp, validate_upload_metadata
 
 
 router = APIRouter(prefix="/inference", tags=["inference"])
@@ -31,13 +31,14 @@ async def infer_video(
     file: UploadFile = File(...),
     save_history: bool = Form(True),
 ) -> InferenceResponse:
-    service = getattr(request.app.state, "inference_service", None)
-    if service is None:
-        raise _http_error(ModelNotReadyError(getattr(request.app.state, "startup_error", None)))
-
-    settings = request.app.state.settings
     stored = None
     try:
+        validate_upload_metadata(file)
+        service = getattr(request.app.state, "inference_service", None)
+        if service is None:
+            raise ModelNotReadyError(getattr(request.app.state, "startup_error", None))
+
+        settings = request.app.state.settings
         stored = await store_upload_to_temp(file, settings)
         return await run_in_threadpool(service.predict_video, stored.path, save_history=save_history)
     except BdSLVisionError as exc:
@@ -47,6 +48,8 @@ async def infer_video(
     finally:
         if stored is not None:
             delete_temp_files([stored.path])
+        else:
+            await file.close()
 
 
 @router.post(

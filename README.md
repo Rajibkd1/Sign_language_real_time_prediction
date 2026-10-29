@@ -106,6 +106,14 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 Linux/macOS:
 
+On Debian/Ubuntu, install MediaPipe's native graphics libraries first (also
+required on a headless server):
+
+```bash
+sudo apt-get update
+sudo apt-get install --yes libegl1 libgl1
+```
+
 ```bash
 source .venv/bin/activate
 pip install -r requirements.txt

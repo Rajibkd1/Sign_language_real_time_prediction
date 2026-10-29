@@ -47,6 +47,33 @@ def test_health_endpoint_returns_status():
         assert "ready" in payload
 
 
+def test_bundled_assets_initialize_a_ready_backend():
+    with TestClient(app) as client:
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        assert response.json()["ready"] is True, client.app.state.startup_error
+
+
+@pytest.mark.parametrize("filename,content_type,status,error", [
+    ("bad.txt", "text/plain", 400, "invalid_upload"),
+    ("clip.webm", "video/webm", 503, "model_not_ready"),
+])
+def test_upload_validation_when_model_is_unavailable(monkeypatch, filename, content_type, status, error):
+    async def unexpected_store(*args, **kwargs):
+        raise AssertionError("Unavailable inference must not store an upload")
+
+    monkeypatch.setattr("app.api.inference.store_upload_to_temp", unexpected_store)
+    with TestClient(app) as client:
+        original = client.app.state.inference_service
+        client.app.state.inference_service = None
+        try:
+            response = client.post("/api/inference/video", files={"file": (filename, b"input", content_type)})
+        finally:
+            client.app.state.inference_service = original
+    assert response.status_code == status
+    assert response.json()["detail"]["error"] == error
+
+
 def test_model_info_endpoint_returns_runtime_shape_contract():
     with TestClient(app) as client:
         response = client.get("/api/model/info")

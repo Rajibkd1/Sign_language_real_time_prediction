@@ -19,6 +19,10 @@ jobs:
       SAVE_INFERENCE_ARTIFACTS: "false"
     steps:
       - uses: actions/checkout@v4
+      - name: Install MediaPipe native libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libegl1 libgl1
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
