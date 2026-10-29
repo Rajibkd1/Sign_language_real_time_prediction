@@ -21,7 +21,8 @@ def build(repo: Path, output: Path, version: str, commit: str, ci_run_url: str) 
     if output.exists():
         raise ValueError("Choose a new output directory; previous evidence will not be overwritten.")
     revision = subprocess.check_output(["git", "rev-parse", "--verify", f"{commit}^{{commit}}"], cwd=repo, text=True).strip()
-    raw = subprocess.check_output(["git", "archive", "--format=tar", revision], cwd=repo)
+    raw = subprocess.check_output(["git", "-c", "core.autocrlf=false", "-c", "core.eol=lf",
+                                   "archive", "--format=tar", revision], cwd=repo)
     files = {}
     with tarfile.open(fileobj=io.BytesIO(raw), mode="r:") as archive:
         for member in archive.getmembers():

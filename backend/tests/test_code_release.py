@@ -26,7 +26,8 @@ def repository(tmp_path, *, exclude=True):
 def test_release_is_reproducible_and_excludes_research_assets(tmp_path):
     root = repository(tmp_path)
     first, second = tmp_path / "a", tmp_path / "b"
-    for output in (first, second):
+    for output, autocrlf in ((first, "true"), (second, "false")):
+        subprocess.run(["git", "config", "core.autocrlf", autocrlf], cwd=root, check=True)
         build(root, output, "0.1.0-rc.1", "HEAD", "https://example.invalid/ci/1")
     name = "BdSL-Vision-0.1.0-rc.1-source.zip"
     assert (first / name).read_bytes() == (second / name).read_bytes()
