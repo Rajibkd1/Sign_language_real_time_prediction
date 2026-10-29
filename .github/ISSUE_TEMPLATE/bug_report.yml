@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a reproducible problem in BdSL Vision
+title: "[Bug] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Expected and actual behavior
+      description: Describe the problem and which page or API it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal example or request without credentials or private video.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and diagnostics
+      description: Include commit, OS, Python/Node/browser versions, device, and relevant errors. Redact personal data.
+    validations:
+      required: true

@@ -2,6 +2,17 @@
 
 Bangla Sign Language Sentence Recognition with live browser camera translation, uploaded video inference, FastAPI, MediaPipe Tasks, PyTorch Model 6, and word-level CTC decoding.
 
+[Code license: MIT](LICENSE) · [Evaluation](docs/EVALUATION.md) · [Model card](docs/MODEL_CARD.md) · [Contributing](CONTRIBUTING.md) · [Maintainers](MAINTAINERS.md)
+
+This is a research prototype for camera-based BdSL accessibility experiments.
+The repository implements **1662D Model 6 (4,924,163 parameters)**. The final-year
+report's proposed model uses **646D features (4,129,350 parameters)**; its reported
+2.851% held-out test WER is not a verified score for the checkpoint in this repo.
+See the [evaluation guide](docs/EVALUATION.md) for attributed research results,
+reproducible measurement tools and remaining evidence gaps. Code is MIT licensed;
+model, vocabulary, dataset and third-party asset rights are tracked separately
+in [NOTICE.md](NOTICE.md).
+
 BdSL Vision is designed for the correct workflow:
 
 ```text
@@ -41,7 +52,7 @@ flowchart LR
 ## Requirements
 
 - Python 3.10, 3.11, or 3.12 recommended. MediaPipe and PyTorch wheels may not be available for every Python 3.13 environment.
-- Node.js 20+.
+- Node.js 22.12+ recommended for the locked frontend toolchain.
 - A browser with `getUserMedia`.
 - The supplied Model 6 files:
   - `backend/models/model6_best_wer_checkpoint.pt`
@@ -106,7 +117,7 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -239,3 +250,25 @@ The backend uses CUDA when PyTorch reports it is available. CUDA autocast is ena
 Model 6 is a full-sequence/non-causal encoder. Live camera output is finalized after sentence-end detection; uploaded videos and clean live windows usually provide the most stable sentence.
 
 The confidence value is an uncalibrated greedy-decoding heuristic, not a calibrated probability.
+
+Recognition is limited to the bundled vocabulary. Current-checkpoint WER,
+real labeled examples, signer-independent performance and full browser/live
+latency remain unverified. Synthetic latency tests measure execution cost only.
+
+## Evaluation and contributions
+
+From the repository root, with backend dependencies installed:
+
+```bash
+python backend/scripts/benchmark_model.py --frames 128 384 --warmup 5 --runs 30 --threads 1 --output evaluation-results/model6-latency.json
+```
+
+For real predictions and corpus WER, follow the labeled-video protocol in
+[docs/EVALUATION.md](docs/EVALUATION.md). Do not publish private recordings or
+reuse the report's scores for a different checkpoint.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for checks and pull requests,
+[MAINTAINERS.md](MAINTAINERS.md) for stewardship,
+[the roadmap](docs/ROADMAP.md) for evidence gaps, and
+[the changelog](CHANGELOG.md) for changes. Bug reports and evaluation proposals
+can be submitted through [GitHub issues](https://github.com/Rajibkd1/Sign_language_real_time_prediction/issues/new/choose).

@@ -1,0 +1,24 @@
+# Changelog
+
+## Unreleased
+
+### Added
+
+- MIT license for original code and documentation, with separate research asset
+  rights and provenance notes.
+- Model card and evaluation guide distinguishing the final report's 646D model
+  from this repository's 1662D Model 6.
+- Corpus WER scoring, labeled-video evaluation and synthetic latency benchmark
+  tools, plus scoring regression tests.
+- Contribution and maintainer guides, CODEOWNERS, issue and pull request
+  templates, and backend/frontend CI checks.
+
+### Changed
+
+- Updated frontend tooling and transitive packages to address npm audit findings;
+  Vite 8.3.5 and Vitest 4.1.12 are the minimum requested versions.
+
+### Evidence still needed
+
+- Matching 646D research artifacts, independently reproduced accuracy, real
+  labeled Model 6 examples, complete application latency and asset permissions.

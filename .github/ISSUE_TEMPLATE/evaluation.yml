@@ -1,0 +1,24 @@
+name: Evaluation or model improvement
+description: Propose a reproducible experiment or report a model limitation
+body:
+  - type: textarea
+    id: scope
+    attributes:
+      label: Model and question
+      description: Identify 1662D Model 6 or the report's separate 646D model, checkpoint hash, and hypothesis.
+    validations:
+      required: true
+  - type: textarea
+    id: protocol
+    attributes:
+      label: Data and protocol
+      description: Describe provenance, permissions, split/group checks, labels, normalization, metrics and failure handling.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or acceptance criteria
+      description: Include reproducible commands, hardware, results and limitations, or describe the evidence needed.
+    validations:
+      required: true
